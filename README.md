@@ -2,6 +2,8 @@
 
 Настольное приложение для учёта личных доходов и расходов.
 
+![Главное окно FinanceTracker](docs/financetracker-main.png)
+
 ## Стек
 
 - C# и .NET 8 LTS
