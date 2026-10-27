@@ -2,6 +2,9 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using Avalonia;
+using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FinanceTracker.Core;
@@ -16,11 +19,15 @@ public partial class MainViewModel : ViewModelBase
     private long _editId;
     private bool _initialized;
 
-    public MainViewModel()
+    public MainViewModel(string? databasePath = null)
     {
-        DatabasePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "FinanceTracker", "finance.db");
+        var localData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        if (string.IsNullOrWhiteSpace(localData))
+            localData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share");
+        var overrideDirectory = Environment.GetEnvironmentVariable("FINANCETRACKER_DATA_DIR");
+        DatabasePath = databasePath ?? (string.IsNullOrWhiteSpace(overrideDirectory)
+            ? Path.Combine(localData, "FinanceTracker", "finance.db")
+            : Path.Combine(overrideDirectory, "finance.db"));
         _repository = new SqliteFinanceRepository(DatabasePath);
 
         TypeOptions = ["Расход", "Доход"];
@@ -40,6 +47,9 @@ public partial class MainViewModel : ViewModelBase
     public ObservableCollection<string> Categories { get; } = [];
     public ObservableCollection<string> ExpenseCategories { get; } = [];
     public ObservableCollection<string> IncomeCategories { get; } = [];
+    public ObservableCollection<string> TrendLabels { get; } = [];
+    public Points IncomeTrendPoints { get; } = [];
+    public Points ExpenseTrendPoints { get; } = [];
     public ObservableCollection<MonthOption> MonthOptions { get; }
     public IReadOnlyList<string> TypeOptions { get; }
     public IReadOnlyList<string> FilterTypeOptions { get; }
@@ -74,6 +84,11 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private string _currencySymbol = "грн";
     [ObservableProperty] private bool _hasNoRecentTransactions = true;
     [ObservableProperty] private bool _hasNoCategoryStats = true;
+    [ObservableProperty] private bool _hasTrendData;
+    [ObservableProperty] private bool _hasNoTrendData = true;
+    [ObservableProperty] private Bitmap? _backgroundImage;
+    [ObservableProperty] private double _backgroundOpacity = 0.22;
+    [ObservableProperty] private string _backgroundFileName = "Фон не выбран";
 
     partial void OnSelectedTypeChanged(string value)
     {
@@ -94,6 +109,7 @@ public partial class MainViewModel : ViewModelBase
             await _repository.InitializeAsync();
             _initialized = true;
             CurrencySymbol = await _repository.GetSettingAsync("Currency", "грн");
+            await LoadAppearanceAsync();
             await LoadCategoryListsAsync();
             await LoadFormCategoriesAsync();
             _allTransactions = (await _repository.GetAllAsync()).ToList();
@@ -270,11 +286,97 @@ public partial class MainViewModel : ViewModelBase
     {
         await _repository.RestoreBackupAsync(path);
         CurrencySymbol = await _repository.GetSettingAsync("Currency", "грн");
+        await LoadAppearanceAsync();
         await LoadCategoryListsAsync();
         await LoadFormCategoriesAsync();
         _allTransactions = (await _repository.GetAllAsync()).ToList();
         await RefreshViewAsync();
         StatusMessage = "Резервная копия восстановлена";
+    }
+
+    public async Task SetBackgroundImageAsync(string sourcePath)
+    {
+        if (!File.Exists(sourcePath)) throw new FileNotFoundException("Изображение не найдено.", sourcePath);
+        var info = new FileInfo(sourcePath);
+        if (info.Length > 25 * 1024 * 1024) throw new InvalidOperationException("Размер изображения не должен превышать 25 МБ.");
+
+        var extension = Path.GetExtension(sourcePath).ToLowerInvariant();
+        if (extension is not (".png" or ".jpg" or ".jpeg" or ".webp" or ".bmp"))
+            throw new InvalidOperationException("Поддерживаются PNG, JPG, WEBP и BMP.");
+
+        using (var testStream = File.OpenRead(sourcePath))
+        using (var testBitmap = new Bitmap(testStream)) { }
+
+        var backgroundDirectory = Path.Combine(Path.GetDirectoryName(DatabasePath)!, "Appearance");
+        Directory.CreateDirectory(backgroundDirectory);
+        foreach (var oldFile in Directory.EnumerateFiles(backgroundDirectory, "background.*"))
+            if (!Path.GetFullPath(oldFile).Equals(Path.GetFullPath(sourcePath), StringComparison.Ordinal)) File.Delete(oldFile);
+
+        var destination = Path.Combine(backgroundDirectory, $"background{extension}");
+        if (!Path.GetFullPath(sourcePath).Equals(Path.GetFullPath(destination), StringComparison.Ordinal))
+            File.Copy(sourcePath, destination, true);
+
+        await _repository.SetSettingAsync("BackgroundImagePath", destination);
+        ReplaceBackgroundImage(LoadBitmap(destination));
+        BackgroundFileName = Path.GetFileName(sourcePath);
+        StatusMessage = "Фоновое изображение установлено";
+    }
+
+    [RelayCommand]
+    private async Task SaveAppearanceAsync()
+    {
+        BackgroundOpacity = Math.Clamp(BackgroundOpacity, 0.05, 0.55);
+        await _repository.SetSettingAsync("BackgroundOpacity", BackgroundOpacity.ToString(CultureInfo.InvariantCulture));
+        StatusMessage = "Настройки оформления сохранены";
+    }
+
+    [RelayCommand]
+    private async Task RemoveBackgroundAsync()
+    {
+        var backgroundDirectory = Path.Combine(Path.GetDirectoryName(DatabasePath)!, "Appearance");
+        if (Directory.Exists(backgroundDirectory))
+            foreach (var file in Directory.EnumerateFiles(backgroundDirectory, "background.*")) File.Delete(file);
+        await _repository.SetSettingAsync("BackgroundImagePath", string.Empty);
+        ReplaceBackgroundImage(null);
+        BackgroundFileName = "Фон не выбран";
+        StatusMessage = "Фоновое изображение удалено";
+    }
+
+    private async Task LoadAppearanceAsync()
+    {
+        var opacityText = await _repository.GetSettingAsync("BackgroundOpacity", "0.22");
+        if (double.TryParse(opacityText, NumberStyles.Float, CultureInfo.InvariantCulture, out var opacity))
+            BackgroundOpacity = Math.Clamp(opacity, 0.05, 0.55);
+
+        var path = await _repository.GetSettingAsync("BackgroundImagePath", string.Empty);
+        if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+        {
+            try
+            {
+                ReplaceBackgroundImage(LoadBitmap(path));
+                BackgroundFileName = Path.GetFileName(path);
+                return;
+            }
+            catch
+            {
+                await _repository.SetSettingAsync("BackgroundImagePath", string.Empty);
+            }
+        }
+        ReplaceBackgroundImage(null);
+        BackgroundFileName = "Фон не выбран";
+    }
+
+    private static Bitmap LoadBitmap(string path)
+    {
+        using var stream = File.OpenRead(path);
+        return new Bitmap(stream);
+    }
+
+    private void ReplaceBackgroundImage(Bitmap? bitmap)
+    {
+        var previous = BackgroundImage;
+        BackgroundImage = bitmap;
+        previous?.Dispose();
     }
 
     private async Task RefreshViewAsync()
@@ -305,12 +407,44 @@ public partial class MainViewModel : ViewModelBase
                      .OrderByDescending(x => x.Total))
             CategoryStats.Add(new CategoryStat(group.Name, FormatMoney(group.Total), group.Total * 100d / expense));
         HasNoCategoryStats = CategoryStats.Count == 0;
+        BuildTrendChart();
 
         ApplyFilters();
         RecentTransactions.Clear();
         foreach (var row in monthly.OrderByDescending(x => x.Date).ThenByDescending(x => x.Id).Take(8).Select(x => TransactionRow.From(x, CurrencySymbol)))
             RecentTransactions.Add(row);
         HasNoRecentTransactions = RecentTransactions.Count == 0;
+    }
+
+    private void BuildTrendChart()
+    {
+        if (SelectedMonth is null) return;
+        var end = new DateTime(SelectedMonth.Year, SelectedMonth.Month, 1);
+        var months = Enumerable.Range(0, 6).Select(index => end.AddMonths(index - 5)).ToArray();
+        var income = months.Select(month => _allTransactions
+            .Where(item => item.Type == TransactionType.Income && item.Date.Year == month.Year && item.Date.Month == month.Month)
+            .Sum(item => item.AmountMinor)).ToArray();
+        var expenses = months.Select(month => _allTransactions
+            .Where(item => item.Type == TransactionType.Expense && item.Date.Year == month.Year && item.Date.Month == month.Month)
+            .Sum(item => item.AmountMinor)).ToArray();
+        HasTrendData = income.Any(value => value > 0) || expenses.Any(value => value > 0);
+        HasNoTrendData = !HasTrendData;
+        var maximum = Math.Max(1L, income.Concat(expenses).DefaultIfEmpty(1L).Max());
+
+        IncomeTrendPoints.Clear();
+        ExpenseTrendPoints.Clear();
+        TrendLabels.Clear();
+        const double left = 28;
+        const double top = 18;
+        const double chartWidth = 844;
+        const double chartHeight = 190;
+        for (var index = 0; index < months.Length; index++)
+        {
+            var x = left + chartWidth * index / (months.Length - 1);
+            IncomeTrendPoints.Add(new Point(x, top + chartHeight * (1d - income[index] / (double)maximum)));
+            ExpenseTrendPoints.Add(new Point(x, top + chartHeight * (1d - expenses[index] / (double)maximum)));
+            TrendLabels.Add(months[index].ToString("MMM", CultureInfo.GetCultureInfo("ru-RU")).TrimEnd('.').ToUpperInvariant());
+        }
     }
 
     private void ApplyFilters()

@@ -85,4 +85,32 @@ public partial class MainWindow : Window
             await error.ShowDialog<bool>(this);
         }
     }
+
+    private async void ChooseBackground_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel) return;
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Выберите фоновое изображение",
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("Изображения") { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.webp", "*.bmp"] },
+                FilePickerFileTypes.All
+            ]
+        });
+        var path = files.FirstOrDefault()?.TryGetLocalPath();
+        if (string.IsNullOrWhiteSpace(path)) return;
+
+        try
+        {
+            await viewModel.SetBackgroundImageAsync(path);
+        }
+        catch (Exception ex)
+        {
+            viewModel.StatusMessage = $"Не удалось установить фон: {ex.Message}";
+            var error = new ConfirmationDialog("Не удалось открыть изображение", ex.Message, "Закрыть");
+            await error.ShowDialog<bool>(this);
+        }
+    }
 }
