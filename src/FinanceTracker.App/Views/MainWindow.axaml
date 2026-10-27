@@ -1,0 +1,154 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:FinanceTracker.App.ViewModels"
+        x:Class="FinanceTracker.App.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Width="1440" Height="900" MinWidth="1050" MinHeight="700"
+        WindowStartupLocation="CenterScreen"
+        Icon="/Assets/financetracker.ico"
+        Background="#0B1118" Title="FinanceTracker — Учёт личных расходов">
+  <Window.Styles>
+    <Style Selector="TextBlock"><Setter Property="FontFamily" Value="Inter"/><Setter Property="Foreground" Value="#DCE6EF"/></Style>
+    <Style Selector="Button"><Setter Property="FontFamily" Value="Inter"/><Setter Property="Cursor" Value="Hand"/></Style>
+    <Style Selector="Button.nav"><Setter Property="HorizontalContentAlignment" Value="Left"/><Setter Property="Height" Value="52"/><Setter Property="Padding" Value="18,0"/><Setter Property="Margin" Value="8,4"/><Setter Property="Background" Value="Transparent"/><Setter Property="Foreground" Value="#B9C8D6"/><Setter Property="BorderThickness" Value="0"/><Setter Property="CornerRadius" Value="8"/><Setter Property="FontSize" Value="14"/></Style>
+    <Style Selector="Button.nav:pointerover"><Setter Property="Background" Value="#1B3042"/><Setter Property="Foreground" Value="White"/></Style>
+    <Style Selector="Button.nav.active"><Setter Property="Background" Value="#2379CF"/><Setter Property="Foreground" Value="White"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
+    <Style Selector="Button.primary"><Setter Property="Background" Value="#267EDB"/><Setter Property="Foreground" Value="White"/><Setter Property="BorderBrush" Value="#3997F2"/><Setter Property="CornerRadius" Value="7"/><Setter Property="Height" Value="42"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
+    <Style Selector="Button.secondary"><Setter Property="Background" Value="#182633"/><Setter Property="Foreground" Value="#C8D5E0"/><Setter Property="BorderBrush" Value="#304354"/><Setter Property="CornerRadius" Value="7"/><Setter Property="Height" Value="38"/></Style>
+    <Style Selector="TextBox"><Setter Property="Background" Value="#15232F"/><Setter Property="Foreground" Value="#EDF4FA"/><Setter Property="BorderBrush" Value="#314555"/><Setter Property="CornerRadius" Value="7"/><Setter Property="MinHeight" Value="39"/></Style>
+    <Style Selector="ComboBox"><Setter Property="Background" Value="#15232F"/><Setter Property="Foreground" Value="#EDF4FA"/><Setter Property="BorderBrush" Value="#314555"/><Setter Property="CornerRadius" Value="7"/><Setter Property="MinHeight" Value="39"/></Style>
+    <Style Selector="DatePicker"><Setter Property="Background" Value="#15232F"/><Setter Property="Foreground" Value="#EDF4FA"/><Setter Property="BorderBrush" Value="#314555"/><Setter Property="CornerRadius" Value="7"/><Setter Property="MinHeight" Value="39"/></Style>
+    <Style Selector="Border.card"><Setter Property="Background" Value="#111C26"/><Setter Property="BorderBrush" Value="#273947"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="10"/><Setter Property="Padding" Value="18"/></Style>
+    <Style Selector="TextBlock.pageTitle"><Setter Property="FontSize" Value="30"/><Setter Property="FontWeight" Value="Bold"/><Setter Property="Foreground" Value="White"/></Style>
+    <Style Selector="TextBlock.sectionTitle"><Setter Property="FontSize" Value="17"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="#F4F7FA"/></Style>
+    <Style Selector="TextBlock.label"><Setter Property="FontSize" Value="12"/><Setter Property="Foreground" Value="#9FB0BF"/></Style>
+    <Style Selector="ProgressBar"><Setter Property="Foreground" Value="#45D38A"/><Setter Property="Background" Value="#21313F"/><Setter Property="Height" Value="10"/><Setter Property="CornerRadius" Value="5"/></Style>
+  </Window.Styles>
+
+  <Grid RowDefinitions="42,*" ColumnDefinitions="216,*">
+    <Border Grid.Row="0" Grid.ColumnSpan="2" Background="#0D151E" BorderBrush="#263644" BorderThickness="0,0,0,1">
+      <Grid ColumnDefinitions="*,Auto" Margin="17,0">
+        <StackPanel Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
+          <TextBlock Text="▱" Foreground="#2C8CFF" FontSize="22" FontWeight="Bold"/>
+          <TextBlock Text="FinanceTracker" FontWeight="SemiBold" FontSize="14"/>
+          <TextBlock Text="— Учёт личных расходов" Foreground="#96A8B8" FontSize="13"/>
+        </StackPanel>
+        <TextBlock Grid.Column="1" Text="●  Локальная база" Foreground="#45D38A" FontSize="11" VerticalAlignment="Center"/>
+      </Grid>
+    </Border>
+
+    <Border Grid.Row="1" Grid.Column="0" Background="#12202B" BorderBrush="#263744" BorderThickness="0,0,1,0">
+      <Grid RowDefinitions="*,Auto">
+        <StackPanel Margin="0,18,0,0">
+          <Button x:Name="DashboardNav" Classes="nav active" Tag="Dashboard" Click="Navigation_Click" Content="⌂    Главная"/>
+          <Button x:Name="OperationsNav" Classes="nav" Tag="Operations" Click="Navigation_Click" Content="▤    Операции"/>
+          <Button x:Name="StatisticsNav" Classes="nav" Tag="Statistics" Click="Navigation_Click" Content="⌁    Статистика"/>
+          <Button x:Name="BudgetNav" Classes="nav" Tag="Budget" Click="Navigation_Click" Content="◎    Бюджет"/>
+          <Button x:Name="CategoriesNav" Classes="nav" Tag="Categories" Click="Navigation_Click" Content="◇    Категории"/>
+          <Button x:Name="SettingsNav" Classes="nav" Tag="Settings" Click="Navigation_Click" Content="⚙    Настройки"/>
+        </StackPanel>
+        <Border Grid.Row="1" Margin="15" Padding="12" Background="#0E1922" CornerRadius="8">
+          <StackPanel Spacing="4"><TextBlock Text="FinanceTracker 1.0" FontSize="11"/><TextBlock Text="Данные хранятся на ПК" Foreground="#7F94A5" FontSize="10"/></StackPanel>
+        </Border>
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="1" Grid.Column="1">
+      <!-- DASHBOARD -->
+      <ScrollViewer x:Name="DashboardPage" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="24" Spacing="15">
+          <Grid ColumnDefinitions="*,290">
+            <StackPanel><TextBlock Classes="pageTitle" Text="Главная"/><TextBlock Text="Обзор ваших финансов" Foreground="#98AABC" FontSize="15"/></StackPanel>
+            <ComboBox Grid.Column="1" ItemsSource="{Binding MonthOptions}" SelectedItem="{Binding SelectedMonth}" VerticalAlignment="Center"/>
+          </Grid>
+
+          <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="13">
+            <Border Classes="card"><Grid ColumnDefinitions="54,*"><Border Width="48" Height="48" CornerRadius="10" Background="#174A36"><TextBlock Text="▱" Foreground="#45D38A" FontSize="27" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><StackPanel Grid.Column="1" Margin="14,0,0,0"><TextBlock Text="Доходы" Foreground="#AFC0CE"/><TextBlock Text="{Binding IncomeTotal}" Foreground="#45D38A" FontSize="22" FontWeight="Bold"/><TextBlock Text="за выбранный месяц" Foreground="#718697" FontSize="10"/></StackPanel></Grid></Border>
+            <Border Grid.Column="1" Classes="card" Background="#211A20"><Grid ColumnDefinitions="54,*"><Border Width="48" Height="48" CornerRadius="10" Background="#512D35"><TextBlock Text="▤" Foreground="#FF666B" FontSize="25" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><StackPanel Grid.Column="1" Margin="14,0,0,0"><TextBlock Text="Расходы" Foreground="#AFC0CE"/><TextBlock Text="{Binding ExpenseTotal}" Foreground="#FF7478" FontSize="22" FontWeight="Bold"/><TextBlock Text="за выбранный месяц" Foreground="#718697" FontSize="10"/></StackPanel></Grid></Border>
+            <Border Grid.Column="2" Classes="card" Background="#102238"><Grid ColumnDefinitions="54,*"><Border Width="48" Height="48" CornerRadius="10" Background="#163F69"><TextBlock Text="▣" Foreground="#3997FF" FontSize="25" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><StackPanel Grid.Column="1" Margin="14,0,0,0"><TextBlock Text="Баланс" Foreground="#AFC0CE"/><TextBlock Text="{Binding BalanceTotal}" Foreground="#3997FF" FontSize="22" FontWeight="Bold"/><TextBlock Text="доходы − расходы" Foreground="#718697" FontSize="10"/></StackPanel></Grid></Border>
+            <Border Grid.Column="3" Classes="card"><StackPanel Spacing="7"><TextBlock Text="◎  Бюджет на месяц" Foreground="#AFC0CE"/><TextBlock Text="{Binding BudgetCaption}" FontSize="15" FontWeight="SemiBold"/><ProgressBar Value="{Binding BudgetProgress}" Maximum="100"/><TextBlock Text="{Binding BudgetProgress, StringFormat={}{0:0}%}" HorizontalAlignment="Right" Foreground="#8EA2B3" FontSize="10"/></StackPanel></Border>
+          </Grid>
+
+          <Grid ColumnDefinitions="2*,1*" ColumnSpacing="13">
+            <Border Classes="card" MinHeight="290">
+              <StackPanel Spacing="13"><TextBlock Classes="sectionTitle" Text="Последние операции"/>
+                <Grid ColumnDefinitions="95,100,130,*,130" Margin="5,3"><TextBlock Text="Дата" Classes="label"/><TextBlock Grid.Column="1" Text="Тип" Classes="label"/><TextBlock Grid.Column="2" Text="Категория" Classes="label"/><TextBlock Grid.Column="3" Text="Описание" Classes="label"/><TextBlock Grid.Column="4" Text="Сумма" Classes="label" HorizontalAlignment="Right"/></Grid>
+                <ItemsControl ItemsSource="{Binding RecentTransactions}"><ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:TransactionRow"><Border BorderBrush="#21313E" BorderThickness="0,0,0,1" Padding="5,9"><Grid ColumnDefinitions="95,100,130,*,130"><TextBlock Text="{Binding DateText}"/><TextBlock Grid.Column="1" Text="{Binding TypeText}" Foreground="{Binding AmountColor}"/><TextBlock Grid.Column="2" Text="{Binding Category}"/><TextBlock Grid.Column="3" Text="{Binding DescriptionOrCategory}" Foreground="#AAB9C6"/><TextBlock Grid.Column="4" Text="{Binding AmountText}" Foreground="{Binding AmountColor}" FontWeight="SemiBold" HorizontalAlignment="Right"/></Grid></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+                <TextBlock Text="Операции появятся после добавления" Foreground="#708697" HorizontalAlignment="Center" Margin="0,15" IsVisible="{Binding HasNoRecentTransactions}"/>
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Classes="card"><StackPanel Spacing="10"><TextBlock Classes="sectionTitle" Text="{Binding FormTitle}"/>
+              <TextBlock Classes="label" Text="Тип операции"/><ComboBox ItemsSource="{Binding TypeOptions}" SelectedItem="{Binding SelectedType}"/>
+              <TextBlock Classes="label" Text="Сумма"/><TextBox Text="{Binding AmountInput}" Watermark="0,00"/>
+              <TextBlock Classes="label" Text="Категория"/><ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}"/>
+              <TextBlock Classes="label" Text="Описание"/><TextBox Text="{Binding Description}" Watermark="Например: Магазин, АТБ" MaxLength="500"/>
+              <TextBlock Classes="label" Text="Дата"/><DatePicker SelectedDate="{Binding OperationDate}"/>
+              <TextBlock Text="{Binding FormError}" Foreground="#FF666B" FontSize="11" TextWrapping="Wrap"/>
+              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8"><Button Classes="primary" Content="{Binding SaveButtonText}" Command="{Binding SaveTransactionCommand}"/><Button Grid.Column="1" Classes="secondary" Content="Отмена" Command="{Binding CancelEditCommand}"/></Grid>
+            </StackPanel></Border>
+          </Grid>
+          <TextBlock Text="{Binding StatusMessage}" Foreground="#7F94A5" FontSize="11" HorizontalAlignment="Right"/>
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- OPERATIONS -->
+      <Grid x:Name="OperationsPage" IsVisible="False" RowDefinitions="Auto,*" Margin="24">
+        <StackPanel><TextBlock Classes="pageTitle" Text="Операции"/><TextBlock Text="Полная история доходов и расходов" Foreground="#98AABC"/></StackPanel>
+        <Grid Grid.Row="1" ColumnDefinitions="*,330" ColumnSpacing="14" Margin="0,18,0,0">
+          <Border Classes="card"><Grid RowDefinitions="Auto,Auto,*">
+            <Grid ColumnDefinitions="180,*,120" ColumnSpacing="9"><ComboBox ItemsSource="{Binding FilterTypeOptions}" SelectedItem="{Binding FilterType}"/><TextBox Grid.Column="1" Text="{Binding SearchText}" Watermark="Поиск по категории или описанию"/><Button Grid.Column="2" Classes="secondary" Content="Сбросить" Command="{Binding ClearFiltersCommand}"/></Grid>
+            <Grid Grid.Row="1" ColumnDefinitions="95,100,130,*,130,105" Margin="6,18,6,6"><TextBlock Text="Дата" Classes="label"/><TextBlock Grid.Column="1" Text="Тип" Classes="label"/><TextBlock Grid.Column="2" Text="Категория" Classes="label"/><TextBlock Grid.Column="3" Text="Описание" Classes="label"/><TextBlock Grid.Column="4" Text="Сумма" Classes="label" HorizontalAlignment="Right"/><TextBlock Grid.Column="5" Text="Действия" Classes="label" HorizontalAlignment="Right"/></Grid>
+            <ScrollViewer Grid.Row="2"><ItemsControl ItemsSource="{Binding Transactions}"><ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:TransactionRow"><Border BorderBrush="#21313E" BorderThickness="0,0,0,1" Padding="6,9"><Grid ColumnDefinitions="95,100,130,*,130,105"><TextBlock Text="{Binding DateText}"/><TextBlock Grid.Column="1" Text="{Binding TypeText}" Foreground="{Binding AmountColor}"/><TextBlock Grid.Column="2" Text="{Binding Category}"/><TextBlock Grid.Column="3" Text="{Binding DescriptionOrCategory}" Foreground="#AAB9C6"/><TextBlock Grid.Column="4" Text="{Binding AmountText}" Foreground="{Binding AmountColor}" FontWeight="SemiBold" HorizontalAlignment="Right"/><StackPanel Grid.Column="5" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5"><Button Classes="secondary" Width="42" Height="30" Content="✎" Command="{Binding $parent[Window].DataContext.EditTransactionCommand}" CommandParameter="{Binding}"/><Button Classes="secondary" Width="42" Height="30" Content="×" Foreground="#FF666B" Click="DeleteTransaction_Click"/></StackPanel></Grid></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer>
+          </Grid></Border>
+          <Border Grid.Column="1" Classes="card"><StackPanel Spacing="9"><TextBlock Classes="sectionTitle" Text="{Binding FormTitle}"/><TextBlock Classes="label" Text="Тип"/><ComboBox ItemsSource="{Binding TypeOptions}" SelectedItem="{Binding SelectedType}"/><TextBlock Classes="label" Text="Сумма"/><TextBox Text="{Binding AmountInput}"/><TextBlock Classes="label" Text="Категория"/><ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}"/><TextBlock Classes="label" Text="Описание"/><TextBox Text="{Binding Description}"/><TextBlock Classes="label" Text="Дата"/><DatePicker SelectedDate="{Binding OperationDate}"/><TextBlock Text="{Binding FormError}" Foreground="#FF666B" TextWrapping="Wrap"/><Button Classes="primary" Content="{Binding SaveButtonText}" Command="{Binding SaveTransactionCommand}"/><Button Classes="secondary" Content="Отменить редактирование" Command="{Binding CancelEditCommand}"/><TextBlock Text="{Binding OperationCount}" Foreground="#8297A9" HorizontalAlignment="Right"/></StackPanel></Border>
+        </Grid>
+      </Grid>
+
+      <!-- STATISTICS -->
+      <ScrollViewer x:Name="StatisticsPage" IsVisible="False"><StackPanel Margin="24" Spacing="16"><TextBlock Classes="pageTitle" Text="Статистика"/><TextBlock Text="Структура расходов за выбранный месяц" Foreground="#98AABC"/>
+        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="13"><Border Classes="card"><StackPanel><TextBlock Text="Доходы" Foreground="#9EB0BF"/><TextBlock Text="{Binding IncomeTotal}" Foreground="#45D38A" FontSize="26" FontWeight="Bold"/></StackPanel></Border><Border Grid.Column="1" Classes="card"><StackPanel><TextBlock Text="Расходы" Foreground="#9EB0BF"/><TextBlock Text="{Binding ExpenseTotal}" Foreground="#FF666B" FontSize="26" FontWeight="Bold"/></StackPanel></Border><Border Grid.Column="2" Classes="card"><StackPanel><TextBlock Text="Баланс" Foreground="#9EB0BF"/><TextBlock Text="{Binding BalanceTotal}" Foreground="#3997FF" FontSize="26" FontWeight="Bold"/></StackPanel></Border></Grid>
+        <Border Classes="card"><StackPanel Spacing="15"><TextBlock Classes="sectionTitle" Text="Расходы по категориям"/><ItemsControl ItemsSource="{Binding CategoryStats}"><ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:CategoryStat"><Grid ColumnDefinitions="150,*,120" Margin="0,5"><TextBlock Text="{Binding Name}"/><ProgressBar Grid.Column="1" Value="{Binding Percent}" Maximum="100" Margin="10,0"/><StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8"><TextBlock Text="{Binding Amount}"/><TextBlock Text="{Binding PercentText}" Foreground="#8297A9"/></StackPanel></Grid></DataTemplate></ItemsControl.ItemTemplate></ItemsControl><TextBlock Text="Добавьте расходы, чтобы увидеть статистику" Foreground="#718697" HorizontalAlignment="Center" Margin="0,20" IsVisible="{Binding HasNoCategoryStats}"/></StackPanel></Border>
+      </StackPanel></ScrollViewer>
+
+      <!-- BUDGET -->
+      <ScrollViewer x:Name="BudgetPage" IsVisible="False"><StackPanel Margin="24" Spacing="16"><TextBlock Classes="pageTitle" Text="Бюджет"/><TextBlock Text="Установите лимит расходов на месяц" Foreground="#98AABC"/>
+        <Border Classes="card" MaxWidth="720" HorizontalAlignment="Left"><StackPanel Spacing="13"><TextBlock Classes="sectionTitle" Text="Месячный бюджет"/><ComboBox ItemsSource="{Binding MonthOptions}" SelectedItem="{Binding SelectedMonth}"/><TextBlock Classes="label" Text="Лимит"/><TextBox Text="{Binding BudgetInput}"/><Button Classes="primary" Content="Сохранить бюджет" Command="{Binding SaveBudgetCommand}"/><ProgressBar Value="{Binding BudgetProgress}" Maximum="100"/><Grid ColumnDefinitions="*,Auto"><TextBlock Text="Использовано" Foreground="#9FB0BF"/><TextBlock Grid.Column="1" Text="{Binding BudgetCaption}" FontWeight="SemiBold"/></Grid><TextBlock Text="{Binding BudgetProgress, StringFormat={}{0:0}% лимита}" HorizontalAlignment="Right" Foreground="#45D38A"/></StackPanel></Border>
+      </StackPanel></ScrollViewer>
+
+      <!-- CATEGORIES -->
+      <ScrollViewer x:Name="CategoriesPage" IsVisible="False"><StackPanel Margin="24" Spacing="16"><TextBlock Classes="pageTitle" Text="Категории"/><TextBlock Text="Настройте категории операций" Foreground="#98AABC"/>
+        <Grid ColumnDefinitions="*,*" ColumnSpacing="14"><Border Classes="card"><StackPanel Spacing="10"><TextBlock Classes="sectionTitle" Text="Расходы"/><ItemsControl ItemsSource="{Binding ExpenseCategories}"><ItemsControl.ItemTemplate><DataTemplate><Border Background="#172631" CornerRadius="6" Padding="12,9" Margin="0,3"><TextBlock Text="{Binding}"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border><Border Grid.Column="1" Classes="card"><StackPanel Spacing="10"><TextBlock Classes="sectionTitle" Text="Доходы"/><ItemsControl ItemsSource="{Binding IncomeCategories}"><ItemsControl.ItemTemplate><DataTemplate><Border Background="#172631" CornerRadius="6" Padding="12,9" Margin="0,3"><TextBlock Text="{Binding}"/></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border></Grid>
+        <Border Classes="card" MaxWidth="720" HorizontalAlignment="Left"><StackPanel Spacing="9"><TextBlock Classes="sectionTitle" Text="Добавить категорию"/><ComboBox ItemsSource="{Binding CategoryTypeOptions}" SelectedItem="{Binding NewCategoryType}"/><TextBox Text="{Binding NewCategoryName}" Watermark="Название категории"/><Button Classes="primary" Content="Добавить категорию" Command="{Binding AddCategoryCommand}"/></StackPanel></Border>
+      </StackPanel></ScrollViewer>
+
+      <!-- SETTINGS -->
+      <ScrollViewer x:Name="SettingsPage" IsVisible="False"><StackPanel Margin="24" Spacing="16"><TextBlock Classes="pageTitle" Text="Настройки"/><TextBlock Text="Данные и обслуживание приложения" Foreground="#98AABC"/>
+        <Border Classes="card" MaxWidth="820" HorizontalAlignment="Left">
+          <StackPanel Spacing="12">
+            <TextBlock Classes="sectionTitle" Text="Валюта"/>
+            <Grid ColumnDefinitions="220,160" ColumnSpacing="10">
+              <ComboBox ItemsSource="{Binding CurrencyOptions}" SelectedItem="{Binding CurrencySymbol}"/>
+              <Button Grid.Column="1" Classes="primary" Content="Сохранить" Command="{Binding SaveCurrencyCommand}"/>
+            </Grid>
+          </StackPanel>
+        </Border>
+        <Border Classes="card" MaxWidth="820" HorizontalAlignment="Left">
+          <StackPanel Spacing="12">
+            <TextBlock Classes="sectionTitle" Text="Локальные данные"/>
+            <TextBlock Text="Путь к базе данных" Classes="label"/>
+            <TextBox Text="{Binding DatabasePath}" IsReadOnly="True"/>
+            <WrapPanel Orientation="Horizontal">
+              <Button Classes="secondary" Width="190" Margin="0,0,9,9" Content="Открыть папку данных" Command="{Binding OpenDataFolderCommand}"/>
+              <Button Classes="primary" Width="190" Margin="0,0,9,9" Content="Экспортировать CSV" Command="{Binding ExportCsvCommand}"/>
+              <Button Classes="secondary" Width="190" Margin="0,0,9,9" Content="Создать резервную копию" Command="{Binding CreateBackupCommand}"/>
+              <Button Classes="secondary" Width="190" Margin="0,0,9,9" Content="Восстановить копию" Click="RestoreBackup_Click"/>
+            </WrapPanel>
+            <TextBlock Text="База SQLite хранится только на этом компьютере. Резервные копии создаются в папке Documents/FinanceTracker Backups." Foreground="#8FA3B4" TextWrapping="Wrap"/>
+            <TextBlock Text="{Binding StatusMessage}" Foreground="#45D38A" TextWrapping="Wrap"/>
+          </StackPanel>
+        </Border>
+        <Border Classes="card" MaxWidth="820" HorizontalAlignment="Left"><StackPanel Spacing="6"><TextBlock Classes="sectionTitle" Text="О приложении"/><TextBlock Text="FinanceTracker 1.0.0"/><TextBlock Text="C# • .NET 8 • Avalonia • SQLite" Foreground="#8FA3B4"/><TextBlock Text="Работает без браузера и интернет-соединения." Foreground="#45D38A"/></StackPanel></Border>
+      </StackPanel></ScrollViewer>
+    </Grid>
+  </Grid>
+</Window>

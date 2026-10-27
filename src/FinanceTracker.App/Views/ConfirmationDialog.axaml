@@ -1,0 +1,17 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FinanceTracker.App.Views.ConfirmationDialog"
+        Width="430" Height="220" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#111C26" Title="Подтверждение">
+  <Border Padding="24" BorderBrush="#304454" BorderThickness="1" CornerRadius="10">
+    <Grid RowDefinitions="Auto,*,Auto">
+      <TextBlock x:Name="TitleText" FontSize="20" FontWeight="Bold" Foreground="White"/>
+      <TextBlock x:Name="MessageText" Grid.Row="1" Margin="0,14" TextWrapping="Wrap" Foreground="#B8C7D4" FontSize="13"/>
+      <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+        <Button Width="110" Height="38" Content="Отмена" Click="Cancel_Click" Background="#1A2A37" Foreground="#D5E0E9" BorderBrush="#344A5B" CornerRadius="7"/>
+        <Button x:Name="ConfirmButton" Width="120" Height="38" Content="Подтвердить" Click="Confirm_Click" Background="#C7474B" Foreground="White" BorderBrush="#E26064" CornerRadius="7"/>
+      </StackPanel>
+    </Grid>
+  </Border>
+</Window>
