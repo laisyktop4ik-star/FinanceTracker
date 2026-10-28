@@ -51,7 +51,7 @@
           <Button x:Name="SettingsNav" Classes="nav" Tag="Settings" Click="Navigation_Click" Content="⚙    Настройки"/>
         </StackPanel>
         <Border Grid.Row="1" Margin="15" Padding="12" Background="#0E1922" CornerRadius="8">
-          <StackPanel Spacing="4"><TextBlock Text="FinanceTracker 1.0" FontSize="11"/><TextBlock Text="Данные хранятся на ПК" Foreground="#7F94A5" FontSize="10"/></StackPanel>
+          <StackPanel Spacing="4"><TextBlock Text="FinanceTracker 1.1" FontSize="11"/><TextBlock Text="Данные хранятся на ПК" Foreground="#7F94A5" FontSize="10"/></StackPanel>
         </Border>
       </Grid>
     </Border>
@@ -108,7 +108,15 @@
       </Grid>
 
       <!-- STATISTICS -->
-      <ScrollViewer x:Name="StatisticsPage" IsVisible="False"><StackPanel Margin="24" Spacing="16"><TextBlock Classes="pageTitle" Text="Статистика"/><TextBlock Text="Структура расходов за выбранный месяц" Foreground="#98AABC"/>
+      <ScrollViewer x:Name="StatisticsPage" IsVisible="False">
+        <StackPanel Margin="24" Spacing="16">
+          <Grid ColumnDefinitions="*,290">
+            <StackPanel>
+              <TextBlock Classes="pageTitle" Text="Статистика"/>
+              <TextBlock Text="Доходы, расходы и итог по каждому месяцу" Foreground="#98AABC"/>
+            </StackPanel>
+            <ComboBox Grid.Column="1" ItemsSource="{Binding MonthOptions}" SelectedItem="{Binding SelectedMonth}" VerticalAlignment="Center"/>
+          </Grid>
         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="13"><Border Classes="card"><StackPanel><TextBlock Text="Доходы" Foreground="#9EB0BF"/><TextBlock Text="{Binding IncomeTotal}" Foreground="#45D38A" FontSize="26" FontWeight="Bold"/></StackPanel></Border><Border Grid.Column="1" Classes="card"><StackPanel><TextBlock Text="Расходы" Foreground="#9EB0BF"/><TextBlock Text="{Binding ExpenseTotal}" Foreground="#FF666B" FontSize="26" FontWeight="Bold"/></StackPanel></Border><Border Grid.Column="2" Classes="card"><StackPanel><TextBlock Text="Баланс" Foreground="#9EB0BF"/><TextBlock Text="{Binding BalanceTotal}" Foreground="#3997FF" FontSize="26" FontWeight="Bold"/></StackPanel></Border></Grid>
         <Border Classes="card">
           <StackPanel Spacing="15">
@@ -119,21 +127,55 @@
                 <StackPanel Orientation="Horizontal" Spacing="6"><Border Width="12" Height="4" Background="#FF666B" VerticalAlignment="Center"/><TextBlock Text="Расходы" Foreground="#9EB0BF"/></StackPanel>
               </StackPanel>
             </Grid>
-            <Viewbox Height="235" Stretch="Fill">
-              <Canvas Width="900" Height="225">
-                <Line StartPoint="28,18" EndPoint="872,18" Stroke="#223442" StrokeThickness="1"/>
-                <Line StartPoint="28,66" EndPoint="872,66" Stroke="#223442" StrokeThickness="1"/>
-                <Line StartPoint="28,113" EndPoint="872,113" Stroke="#223442" StrokeThickness="1"/>
-                <Line StartPoint="28,161" EndPoint="872,161" Stroke="#223442" StrokeThickness="1"/>
-                <Line StartPoint="28,208" EndPoint="872,208" Stroke="#314555" StrokeThickness="1"/>
-                <Polyline Points="{Binding IncomeTrendPoints}" Stroke="#45D38A" StrokeThickness="4" IsVisible="{Binding HasTrendData}"/>
-                <Polyline Points="{Binding ExpenseTrendPoints}" Stroke="#FF666B" StrokeThickness="4" IsVisible="{Binding HasTrendData}"/>
-                <TextBlock Canvas.Left="242" Canvas.Top="98" Width="420" Text="Добавьте операции, чтобы увидеть динамику" Foreground="#718697" TextAlignment="Center" IsVisible="{Binding HasNoTrendData}"/>
+            <Grid RowDefinitions="200,Auto" ColumnDefinitions="92,*" ColumnSpacing="12">
+              <Canvas Grid.Row="0" Grid.Column="0" Width="92" Height="200">
+                <TextBlock Canvas.Top="3" Width="92" Text="{Binding TrendAxisMaximum}" Foreground="#8297A9" FontSize="10" TextAlignment="Right"/>
+                <TextBlock Canvas.Top="48" Width="92" Text="{Binding TrendAxisThreeQuarters}" Foreground="#8297A9" FontSize="10" TextAlignment="Right"/>
+                <TextBlock Canvas.Top="93" Width="92" Text="{Binding TrendAxisHalf}" Foreground="#8297A9" FontSize="10" TextAlignment="Right"/>
+                <TextBlock Canvas.Top="138" Width="92" Text="{Binding TrendAxisQuarter}" Foreground="#8297A9" FontSize="10" TextAlignment="Right"/>
+                <TextBlock Canvas.Top="183" Width="92" Text="{Binding TrendAxisZero}" Foreground="#8297A9" FontSize="10" TextAlignment="Right"/>
               </Canvas>
-            </Viewbox>
-            <ItemsControl ItemsSource="{Binding TrendLabels}">
-              <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="6"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Foreground="#718697" FontSize="11" HorizontalAlignment="Center"/></DataTemplate></ItemsControl.ItemTemplate>
+              <Viewbox Grid.Row="0" Grid.Column="1" Height="200" Stretch="Fill">
+                <Canvas Width="800" Height="200">
+                  <Line StartPoint="0,10" EndPoint="800,10" Stroke="#2A3C4A" StrokeThickness="1"/>
+                  <Line StartPoint="0,55" EndPoint="800,55" Stroke="#223442" StrokeThickness="1"/>
+                  <Line StartPoint="0,100" EndPoint="800,100" Stroke="#223442" StrokeThickness="1"/>
+                  <Line StartPoint="0,145" EndPoint="800,145" Stroke="#223442" StrokeThickness="1"/>
+                  <Line StartPoint="0,190" EndPoint="800,190" Stroke="#314555" StrokeThickness="1"/>
+                  <Polyline Points="{Binding IncomeTrendPoints}" Stroke="#45D38A" StrokeThickness="4" IsVisible="{Binding HasIncomeTrend}"/>
+                  <Polyline Points="{Binding ExpenseTrendPoints}" Stroke="#FF666B" StrokeThickness="4" IsVisible="{Binding HasExpenseTrend}"/>
+                  <TextBlock Canvas.Left="190" Canvas.Top="87" Width="420" Text="Добавьте операции, чтобы увидеть динамику" Foreground="#718697" TextAlignment="Center" IsVisible="{Binding HasNoTrendData}"/>
+                </Canvas>
+              </Viewbox>
+              <ItemsControl Grid.Row="1" Grid.Column="1" ItemsSource="{Binding TrendLabels}" Margin="0,7,0,0">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="6"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Foreground="#8297A9" FontSize="11" HorizontalAlignment="Center"/></DataTemplate></ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Grid>
+          </StackPanel>
+        </Border>
+        <Border Classes="card">
+          <StackPanel Spacing="12">
+            <TextBlock Classes="sectionTitle" Text="Итоги по месяцам"/>
+            <Grid ColumnDefinitions="2*,*,*,*" Margin="10,0,10,4">
+              <TextBlock Text="Месяц" Classes="label"/>
+              <TextBlock Grid.Column="1" Text="Доходы" Classes="label" HorizontalAlignment="Right"/>
+              <TextBlock Grid.Column="2" Text="Расходы" Classes="label" HorizontalAlignment="Right"/>
+              <TextBlock Grid.Column="3" Text="Итог" Classes="label" HorizontalAlignment="Right"/>
+            </Grid>
+            <ItemsControl ItemsSource="{Binding MonthlyTrendRows}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:MonthlyTrendRow">
+                  <Border BorderBrush="#243745" BorderThickness="0,0,0,1" Padding="10,9">
+                    <Grid ColumnDefinitions="2*,*,*,*">
+                      <TextBlock Text="{Binding MonthText}" FontWeight="SemiBold"/>
+                      <TextBlock Grid.Column="1" Text="{Binding IncomeText}" Foreground="#45D38A" HorizontalAlignment="Right"/>
+                      <TextBlock Grid.Column="2" Text="{Binding ExpenseText}" Foreground="#FF666B" HorizontalAlignment="Right"/>
+                      <TextBlock Grid.Column="3" Text="{Binding BalanceText}" Foreground="{Binding BalanceColor}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
             </ItemsControl>
           </StackPanel>
         </Border>
@@ -193,7 +235,7 @@
             <TextBlock Text="{Binding StatusMessage}" Foreground="#45D38A" TextWrapping="Wrap"/>
           </StackPanel>
         </Border>
-        <Border Classes="card" Width="820" HorizontalAlignment="Left"><StackPanel Spacing="6"><TextBlock Classes="sectionTitle" Text="О приложении"/><TextBlock Text="FinanceTracker 1.0.0"/><TextBlock Text="C# • .NET 8 • Avalonia • SQLite" Foreground="#8FA3B4"/><TextBlock Text="Работает без браузера и интернет-соединения." Foreground="#45D38A"/></StackPanel></Border>
+        <Border Classes="card" Width="820" HorizontalAlignment="Left"><StackPanel Spacing="6"><TextBlock Classes="sectionTitle" Text="О приложении"/><TextBlock Text="FinanceTracker 1.1.0"/><TextBlock Text="C# • .NET 8 • Avalonia • SQLite" Foreground="#8FA3B4"/><TextBlock Text="Работает без браузера и интернет-соединения." Foreground="#45D38A"/></StackPanel></Border>
       </StackPanel></ScrollViewer>
     </Grid>
   </Grid>

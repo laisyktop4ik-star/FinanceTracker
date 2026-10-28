@@ -1,6 +1,7 @@
 **/bin/
 **/obj/
 publish/
+dist/
 .pdfvenv/
 .vscode/
 .idea/

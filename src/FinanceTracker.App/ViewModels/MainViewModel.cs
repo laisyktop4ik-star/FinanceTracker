@@ -48,6 +48,7 @@ public partial class MainViewModel : ViewModelBase
     public ObservableCollection<string> ExpenseCategories { get; } = [];
     public ObservableCollection<string> IncomeCategories { get; } = [];
     public ObservableCollection<string> TrendLabels { get; } = [];
+    public ObservableCollection<MonthlyTrendRow> MonthlyTrendRows { get; } = [];
     public Points IncomeTrendPoints { get; } = [];
     public Points ExpenseTrendPoints { get; } = [];
     public ObservableCollection<MonthOption> MonthOptions { get; }
@@ -57,7 +58,7 @@ public partial class MainViewModel : ViewModelBase
     public IReadOnlyList<string> CurrencyOptions { get; }
 
     public string DatabasePath { get; }
-    public string AppVersion => "1.0.0";
+    public string AppVersion => "1.1.0";
 
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _statusMessage = "Готово";
@@ -86,6 +87,13 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private bool _hasNoCategoryStats = true;
     [ObservableProperty] private bool _hasTrendData;
     [ObservableProperty] private bool _hasNoTrendData = true;
+    [ObservableProperty] private bool _hasIncomeTrend;
+    [ObservableProperty] private bool _hasExpenseTrend;
+    [ObservableProperty] private string _trendAxisMaximum = string.Empty;
+    [ObservableProperty] private string _trendAxisThreeQuarters = string.Empty;
+    [ObservableProperty] private string _trendAxisHalf = string.Empty;
+    [ObservableProperty] private string _trendAxisQuarter = string.Empty;
+    [ObservableProperty] private string _trendAxisZero = string.Empty;
     [ObservableProperty] private Bitmap? _backgroundImage;
     [ObservableProperty] private double _backgroundOpacity = 0.22;
     [ObservableProperty] private string _backgroundFileName = "Фон не выбран";
@@ -419,33 +427,41 @@ public partial class MainViewModel : ViewModelBase
     private void BuildTrendChart()
     {
         if (SelectedMonth is null) return;
-        var end = new DateTime(SelectedMonth.Year, SelectedMonth.Month, 1);
-        var months = Enumerable.Range(0, 6).Select(index => end.AddMonths(index - 5)).ToArray();
-        var income = months.Select(month => _allTransactions
-            .Where(item => item.Type == TransactionType.Income && item.Date.Year == month.Year && item.Date.Month == month.Month)
-            .Sum(item => item.AmountMinor)).ToArray();
-        var expenses = months.Select(month => _allTransactions
-            .Where(item => item.Type == TransactionType.Expense && item.Date.Year == month.Year && item.Date.Month == month.Month)
-            .Sum(item => item.AmountMinor)).ToArray();
-        HasTrendData = income.Any(value => value > 0) || expenses.Any(value => value > 0);
+        var chart = TrendChartCalculator.Build(
+            new DateOnly(SelectedMonth.Year, SelectedMonth.Month, 1),
+            _allTransactions);
+        HasTrendData = chart.HasData;
         HasNoTrendData = !HasTrendData;
-        var maximum = Math.Max(1L, income.Concat(expenses).DefaultIfEmpty(1L).Max());
+        HasIncomeTrend = chart.HasIncome;
+        HasExpenseTrend = chart.HasExpenses;
 
         IncomeTrendPoints.Clear();
         ExpenseTrendPoints.Clear();
         TrendLabels.Clear();
-        const double left = 28;
-        const double top = 18;
-        const double chartWidth = 844;
-        const double chartHeight = 190;
-        for (var index = 0; index < months.Length; index++)
+        MonthlyTrendRows.Clear();
+        const double top = 10;
+        const double chartWidth = 800;
+        const double chartHeight = 180;
+        for (var index = 0; index < chart.Months.Count; index++)
         {
-            var x = left + chartWidth * index / (months.Length - 1);
-            IncomeTrendPoints.Add(new Point(x, top + chartHeight * (1d - income[index] / (double)maximum)));
-            ExpenseTrendPoints.Add(new Point(x, top + chartHeight * (1d - expenses[index] / (double)maximum)));
-            TrendLabels.Add(months[index].ToString("MMM", CultureInfo.GetCultureInfo("ru-RU")).TrimEnd('.').ToUpperInvariant());
+            var x = chartWidth * (index + 0.5) / chart.Months.Count;
+            IncomeTrendPoints.Add(new Point(x, top + chartHeight * (1d - chart.IncomeMinor[index] / (double)chart.ScaleMaximumMinor)));
+            ExpenseTrendPoints.Add(new Point(x, top + chartHeight * (1d - chart.ExpenseMinor[index] / (double)chart.ScaleMaximumMinor)));
+            TrendLabels.Add(chart.Months[index].ToString("MMM", CultureInfo.GetCultureInfo("ru-RU")).TrimEnd('.').ToUpperInvariant());
         }
+
+        foreach (var total in chart.MonthlyTotals)
+            MonthlyTrendRows.Add(MonthlyTrendRow.From(total, CurrencySymbol));
+
+        TrendAxisMaximum = FormatCompactMoney(chart.ScaleMaximumMinor);
+        TrendAxisThreeQuarters = FormatCompactMoney(chart.ScaleMaximumMinor * 3 / 4);
+        TrendAxisHalf = FormatCompactMoney(chart.ScaleMaximumMinor / 2);
+        TrendAxisQuarter = FormatCompactMoney(chart.ScaleMaximumMinor / 4);
+        TrendAxisZero = FormatCompactMoney(0);
     }
+
+    private string FormatCompactMoney(long minor) =>
+        $"{Money.FromMinorUnits(minor).ToString("N0", CultureInfo.GetCultureInfo("ru-RU"))} {CurrencySymbol}";
 
     private void ApplyFilters()
     {
@@ -516,6 +532,27 @@ public sealed record MonthOption(int Year, int Month)
 public sealed record CategoryStat(string Name, string Amount, double Percent)
 {
     public string PercentText => $"{Percent:0}%";
+}
+
+public sealed record MonthlyTrendRow(DateOnly Month, long IncomeMinor, long ExpenseMinor, string CurrencySymbol)
+{
+    public static MonthlyTrendRow From(MonthlyTrendTotal total, string currencySymbol) =>
+        new(total.Month, total.IncomeMinor, total.ExpenseMinor, currencySymbol);
+
+    public long BalanceMinor => IncomeMinor - ExpenseMinor;
+    public string MonthText => char.ToUpper(Month.ToString("MMMM yyyy", CultureInfo.GetCultureInfo("ru-RU"))[0], CultureInfo.CurrentCulture) +
+                               Month.ToString("MMMM yyyy", CultureInfo.GetCultureInfo("ru-RU"))[1..];
+    public string IncomeText => FormatSigned(IncomeMinor, "+");
+    public string ExpenseText => FormatSigned(ExpenseMinor, "−");
+    public string BalanceText => FormatSigned(BalanceMinor, BalanceMinor > 0 ? "+" : BalanceMinor < 0 ? "−" : string.Empty, absolute: true);
+    public string BalanceColor => BalanceMinor > 0 ? "#45D38A" : BalanceMinor < 0 ? "#FF666B" : "#9FB0BF";
+
+    private string FormatSigned(long value, string sign, bool absolute = false)
+    {
+        if (value == 0) return $"0,00 {CurrencySymbol}";
+        var displayed = absolute ? Math.Abs(value) : value;
+        return $"{sign}{Money.FromMinorUnits(displayed).ToString("N2", CultureInfo.GetCultureInfo("ru-RU"))} {CurrencySymbol}";
+    }
 }
 
 public sealed record TransactionRow(long Id, TransactionType Type, long AmountMinor, string Category, string Description, DateOnly Date, string CurrencySymbol)
